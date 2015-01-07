@@ -2,26 +2,26 @@ Crafty.extend({
     audio: {
 	_playing: [],
 	_readyToPlay: [],
+	volume: 1,
         add: function (id, url) {
             if (!Crafty.support.audio)
                 return;
-	    var that = this;
 	    if (id.indexOf("§") !== -1) {
                 console.log("audio.add: PRELOAD COMPLEX " + url);
-		window.plugins.NativeAudio.preloadComplex( id, url, 1, 1, function(msg){
-		    	that._readyToPlay.push(id);
+		window.plugins.NativeAudio.preloadComplex( id, url, 1, this.volume, function(msg){
+		    	Crafty.audio._readyToPlay.push(id);
 		  }, function(msg){
 		      if(msg == "OK")
-			  that._readyToPlay.push(id);
+			  Crafty.audio._readyToPlay.push(id);
 		      console.log( 'error: ' + msg );
 		  });
 	    } else {
                 console.log("audio.add: PRELOAD SIMPLE " + url);
 		window.plugins.NativeAudio.preloadSimple( id, url, function(msg){
-		    	that._readyToPlay.push(id);
+		    	Crafty.audio._readyToPlay.push(id);
 		  }, function(msg){
 		      if(msg == "OK")
-			  that._readyToPlay.push(id);
+			  Crafty.audio._readyToPlay.push(id);
 		      console.log( 'error: ' + msg );
 		  });
             }
@@ -36,6 +36,7 @@ Crafty.extend({
 			if(Crafty.audio._readyToPlay.indexOf(id) !== -1){
 			    window.plugins.NativeAudio.loop(id);
 			    Crafty.unbind("EnterFrame", wait_for_looping);
+			    return;
 			}
 			eFrames++;
 			if(eFrames >= Crafty.timer.FPS()){
@@ -51,6 +52,7 @@ Crafty.extend({
 			if(Crafty.audio._readyToPlay.indexOf(id) !== -1){
 			    window.plugins.NativeAudio.play(id, function(){}, function(){}, function(){ Crafty.audio._removeFromPlaying(id); });
 			    Crafty.unbind("EnterFrame", wait_for_playing);
+			    return;
 			}
 			eFrames++;
 			if(eFrames >= Crafty.timer.FPS()){
@@ -61,7 +63,7 @@ Crafty.extend({
             }
             if (typeof volume !== "undefined" && volume !== 1 && id.indexOf("§") !== -1)
                 this.changeVolume(id, volume);
-	    if(this._playing.indexOf(id) === -1)
+	    if (this._playing.indexOf(id) === -1)
 		this._playing.push(id);
         },
 	_removeFromPlaying: function(id){
@@ -91,10 +93,10 @@ Crafty.extend({
             }
         },
 	changeVolume: function (id, volume) {
-	    window.plugins.setVolumeForComplexAsset( id, volume, function(msg){
-		  }, function(msg){
-		      console.log( 'error: ' + msg );
-		  })
+	    window.plugins.NativeAudio.setVolumeForComplexAsset(id, volume, function(msg){
+	        }, function(msg){
+		    console.log( 'error: ' + msg );
+		});
 	}
     }
 });
